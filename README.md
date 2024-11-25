@@ -1,5 +1,6 @@
 # WorkHorse
 *Name change pending*
+![workhorse](./docs/_figs/workhorse_banner.png)
 
 Eliminate the human element.
 
