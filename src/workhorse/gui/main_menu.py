@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from ..meta_functions.name_structure import GuiFrame
+from workhorse.meta_functions.name_structure import GuiFrame
 
 
 class Menu:
@@ -115,9 +115,8 @@ class Menu:
         }
 
         # Main application
-        root = ctk.CTk()
         app = GuiFrame(
-            master=root, label="Slide Details", field_groups=field_groups
+            master=self.master, label="Slide Details", field_groups=field_groups
         )
         root.mainloop()
 
