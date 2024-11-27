@@ -69,6 +69,12 @@ class GuiFrame:
         )
         self.export_button.pack(pady=12, padx=10)
 
+        # Export button
+        self.quit_button = ctk.CTkButton(
+            master=self.result_frame, text="Quit", command=self.quit
+        )
+        self.quit_button.pack(pady=12, padx=10)
+
     def _create_fields(self, tab, fields):
         """Create input fields in the specified tab."""
         for field in fields:
@@ -147,6 +153,9 @@ class GuiFrame:
         d = directory_selector()
 
         export.to_excel(f"{d}/exported_names.xlsx")
+
+    def quit(self):
+        self.master.destroy()
 
 
 # Define the types of tabs
