@@ -11,7 +11,7 @@ maintainers = [{name = "Michael Fotheringham", email = "16mrf6@queensu.ca"}]
 
 dynamic = ["version"]
 
-license = {file = "LICENSE"}
+# license = {file = "LICENSE"}
 readme = "README.md"
 
 dependencies = [
