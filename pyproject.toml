@@ -3,8 +3,8 @@ build-backend = "hatchling.build"
 requires = ["hatchling", "hatch-vcs"]
 
 [project]
-name = "datafunks"
-description = "A collection of scripts to perform basic AstroPath analyses."
+name = "workhorse"
+description = ""
 
 authors = [{name = "MF"}]
 maintainers = [{name = "Michael Fotheringham", email = "16mrf6@queensu.ca"}]
