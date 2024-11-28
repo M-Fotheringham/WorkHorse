@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from workhorse.meta_functions.name_structure import GuiFrame
+from workhorse.gui.name_structure import GuiFrame
 
 
 def slidename_generator(self):

@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from workhorse.slidename_generator.slidename_generator import slidename_generator
+from workhorse.filename_adjuster.filename_adjuster import filename_adjuster
 # from PIL import Image
 
 
@@ -51,7 +52,6 @@ class Menu:
             master=self.frame,
             text="File Name Adjuster",
             command=self.renaming,
-            state="disabled",
         )
         self.quit_button.pack(pady=12, padx=10)
 
@@ -71,6 +71,10 @@ class Menu:
 
     def renaming(self):
         """Will redirect to a window to collect parameters for renaming."""
+        self.frame.destroy()
+
+        filename_adjuster(self)
+
         return
 
     def quit(self):
