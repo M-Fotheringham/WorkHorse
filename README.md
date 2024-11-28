@@ -5,10 +5,11 @@ Eliminate the human element.
 
 <br>
 
-## Downloading Executable
+## Running Executable
 Not sure yet how to provide this.
 
-## Package Installation
+## Running Manually
+### Package Installation
 Open a command prompt and clone the repository locally with: <br>
 ```
 git clone https://github.com/M-Fotheringham/workhorse
@@ -21,8 +22,7 @@ and pip install: <br>
 ```
 pip install .
 ```
-
-## Running from Command Line
+### Running from Command Line
 Open a command prompt and enter: <br>
 ```
 py -m workhorse.main
