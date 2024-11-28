@@ -1,5 +1,6 @@
 import customtkinter as ctk
-from workhorse.meta_functions.name_structure import GuiFrame
+from workhorse.slidename_generator.slidename_generator import slidename_generator
+# from PIL import Image
 
 
 class Menu:
@@ -23,6 +24,15 @@ class Menu:
         # Frame setup
         self.frame = ctk.CTkFrame(master=self.master)
         self.frame.pack(pady=20, padx=20, fill="both", expand=True)
+
+        # # Load and resize background image
+        # bg_image = ctk.CTkImage(light_image=Image.open("C:\\Users\\Michael\\
+        # OneDrive - Queen's University\\Documents\\Projects\\Workflow_
+        # Automation\\docs\\_figs\\workhorse_banner.png"), size=(600, 400)
+        # )
+
+        # background_label = ctk.CTkLabel(self.frame, image=bg_image, text="")
+        # background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         # Label
         self.label = ctk.CTkLabel(
@@ -55,70 +65,7 @@ class Menu:
         """Redirects to a window to collect parameters for slide naming."""
         self.frame.destroy()
 
-        # Define the types of tabs
-        field_groups = {
-            "Ab Titration": [
-                {"text": "PrimCase", "placeholder": "Case"},
-                {"text": "Primary Ab", "placeholder": "Primary Ab"},
-                {
-                    "text": "Primary dilution factor",
-                    "placeholder": "Primary dilution factor",
-                },
-                {"text": "Polymer", "placeholder": "Polymer"},
-                {
-                    "field_type": "combobox",
-                    "text": "fluorophore",
-                    "placeholder": [
-                        "",
-                        "480",
-                        "520",
-                        "540",
-                        "570",
-                        "620",
-                        "650",
-                        "690",
-                        "780",
-                    ],
-                },
-                {
-                    "text": "TSA dilution factor",
-                    "placeholder": "TSA dilution factor",
-                },
-                {
-                    "field_type": "combobox",
-                    "text": "scanner",
-                    "placeholder": ["", "QUKPolaris_1", "QUKPolaris_2"],
-                },
-            ],
-            "IHC": [
-                {"text": "IHCCase", "placeholder": "Case"},
-                {"text": "Primary Ab", "placeholder": "Primary Ab"},
-                {
-                    "field_type": "combobox",
-                    "text": "scanner",
-                    "placeholder": ["QUKPolaris_1", "QUKPolaris_2"],
-                },
-            ],
-            "Multiplex": [
-                {"text": "MPCase", "placeholder": "Case"},
-                {"text": "Multiplex number", "placeholder": "Multiplex number"},
-                {
-                    "field_type": "combobox",
-                    "text": "scanner",
-                    "placeholder": ["QUKPolaris_1", "QUKPolaris_2"],
-                },
-            ],
-            "Clinical_Specimen": [
-                {"text": "CSnumber", "placeholder": "CS number"},
-                {"text": "Slidenumber", "placeholder": "Slide number"},
-            ],
-        }
-
-        # Main application
-        app = GuiFrame(
-            master=self.master, label="Slide Details", field_groups=field_groups
-        )
-        root.mainloop()
+        slidename_generator(self)
 
         return
 
@@ -128,8 +75,3 @@ class Menu:
 
     def quit(self):
         self.master.destroy()
-
-
-root = ctk.CTk()
-app = Menu(master=root, label="Main Menu")
-root.mainloop()

@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import pandas as pd
 from workhorse.meta_functions.directory_selector import directory_selector
+# from PIL import Image
 
 
 class GuiFrame:
@@ -26,6 +27,15 @@ class GuiFrame:
         self.frame = ctk.CTkFrame(master=self.master)
         self.frame.pack(pady=20, padx=20, fill="both", expand=True)
 
+        # # Load and resize background image
+        # bg_image = ctk.CTkImage(light_image=Image.open("C:\\Users\\Michael\\
+        # OneDrive - Queen's University\\Documents\\Projects\\Workflow_
+        # Automation\\docs\\_figs\\workhorse_banner.png"), size=(600, 400)
+        # )
+
+        # background_label = ctk.CTkLabel(self.frame, image=bg_image, text="")
+        # background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        
         # Label
         self.label = ctk.CTkLabel(
             master=self.frame, text=label, font=("Arial", 24)
@@ -77,7 +87,10 @@ class GuiFrame:
 
         # Main Menu button
         self.menu_button = ctk.CTkButton(
-            master=self.result_frame, text="Main Menu", command=self.menu
+            master=self.result_frame,
+            text="Main Menu",
+            command=self.menu,
+            state="disabled",
         )
         self.menu_button.pack(pady=24, padx=10)
 
@@ -110,16 +123,19 @@ class GuiFrame:
         """Combine input data into a single string."""
 
         if data["PrimCase"] != "":
-            name = f"""{data["PrimCase"]}{data["Primary Ab"]}_{data["Primary dilution factor"]}_{data["Polymer"]}_{data["fluorophore"]}_{data["TSA dilution factor"]}_{data["scanner"]}"""
+            name = f"""{data["PrimCase"]}{data["Primary Ab"]}_{data["Primary dilution factor"]}_{data["Polymer"]}_{data["fluorophore"]}_{data["TSA dilution factor"]}_{data["Primscanner"]}"""
 
         elif data["IHCCase"] != "":
-            name = f"""{data["IHCCase"]}_{data["Primary Ab"]}_IHC_{data["scanner"]}"""
+            name = f"""{data["IHCCase"]}_{data["Primary Ab"]}_IHC_{data["IHCscanner"]}"""
 
         elif data["MPCase"] != "":
-            name = f"""{data["MPCase"]}_MP{data["Multiplex number"]}_{data["scanner"]}"""
+            name = f"""{data["MPCase"]}_MP{data["Multiplex number"]}_{data["MPscanner"]}"""
 
         elif data["CSnumber"] != "":
             name = f"""CS{data["CSnumber"]}_{data["Slidenumber"]}"""
+
+        elif data["OtherCase"] != "":
+            name = f"""{data["OtherCase"]}_{data["section"]}_{data["condition"]}_{data["Otherscanner"]}"""
 
         else:
             name = None
@@ -170,65 +186,3 @@ class GuiFrame:
         from workhorse.gui.main_menu import Menu
 
         app = Menu(master=self.master, label="Main Menu")
-
-
-# # Define the types of tabs
-# field_groups = {
-#     "Ab Titration": [
-#         {"text": "PrimCase", "placeholder": "Case"},
-#         {"text": "Primary Ab", "placeholder": "Primary Ab"},
-#         {
-#             "text": "Primary dilution factor",
-#             "placeholder": "Primary dilution factor",
-#         },
-#         {"text": "Polymer", "placeholder": "Polymer"},
-#         {
-#             "field_type": "combobox",
-#             "text": "fluorophore",
-#             "placeholder": [
-#                 "",
-#                 "480",
-#                 "520",
-#                 "540",
-#                 "570",
-#                 "620",
-#                 "650",
-#                 "690",
-#                 "780",
-#             ],
-#         },
-#         {"text": "TSA dilution factor", "placeholder": "TSA dilution factor"},
-#         {
-#             "field_type": "combobox",
-#             "text": "scanner",
-#             "placeholder": ["", "QUKPolaris_1", "QUKPolaris_2"],
-#         },
-#     ],
-#     "IHC": [
-#         {"text": "IHCCase", "placeholder": "Case"},
-#         {"text": "Primary Ab", "placeholder": "Primary Ab"},
-#         {
-#             "field_type": "combobox",
-#             "text": "scanner",
-#             "placeholder": ["QUKPolaris_1", "QUKPolaris_2"],
-#         },
-#     ],
-#     "Multiplex": [
-#         {"text": "MPCase", "placeholder": "Case"},
-#         {"text": "Multiplex number", "placeholder": "Multiplex number"},
-#         {
-#             "field_type": "combobox",
-#             "text": "scanner",
-#             "placeholder": ["QUKPolaris_1", "QUKPolaris_2"],
-#         },
-#     ],
-#     "Clinical_Specimen": [
-#         {"text": "CSnumber", "placeholder": "CS number"},
-#         {"text": "Slidenumber", "placeholder": "Slide number"},
-#     ],
-# }
-
-# # Main application
-# root = ctk.CTk()
-# app = GuiFrame(master=root, label="Slide Details", field_groups=field_groups)
-# root.mainloop()
