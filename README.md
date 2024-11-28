@@ -1,12 +1,14 @@
 # WorkHorse
-*Name change pending*
 ![workhorse](./docs/_figs/workhorse_banner.png)
 
 Eliminate the human element.
 
 <br>
 
-## Installation
+## Downloading Executable
+Not sure yet how to provide this.
+
+## Package Installation
 Open a command prompt and clone the repository locally with: <br>
 ```
 git clone https://github.com/M-Fotheringham/workhorse
@@ -19,6 +21,13 @@ and pip install: <br>
 ```
 pip install .
 ```
+
+## Running from Command Line
+Open a command prompt and enter: <br>
+```
+py -m workhorse.main
+```
+Navigate to the slide name generator or the filename adjuster as desired.
 
 ## Functions
 
