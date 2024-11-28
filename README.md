@@ -6,7 +6,7 @@ Eliminate the human element.
 <br>
 
 ## Running Executable
-Download the latest release from "Releases" on the right of this page.
+Download the latest release from "Releases" on the right of this page. <br>
 Run the .exe to start the app.
 
 ## Running Manually
