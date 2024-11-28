@@ -44,6 +44,10 @@ class GuiFrameRename:
         )
         self.new_text.pack(pady=12, padx=10)
 
+        # Rename inside files checkbox
+        self.inside_check = ctk.CTkCheckBox(master=self.frame, text="Rename inside files?")
+        self.inside_check.pack(pady=12, padx=10)
+        
         # Swap button
         self.swap_button = ctk.CTkButton(
             master=self.frame, text="Swap", command=self.swap
@@ -93,7 +97,7 @@ class GuiFrameRename:
     def swap(self):
         d = directory_selector()
 
-        name_replacer(d, self.original_text.get(), self.new_text.get())
+        name_replacer(d, self.original_text.get(), self.new_text.get(), self.inside_check.get())
 
     def quit(self):
         self.master.destroy()
