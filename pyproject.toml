@@ -15,17 +15,9 @@ dynamic = ["version"]
 readme = "README.md"
 
 dependencies = [
-    "numpy",
     "pandas",
-    "matplotlib",
-    "shapely",
-    "geopandas",
-    "holoviews",
-    "datashader",
-    "colorcet",
-    "scipy",
-    "lifelines",
-    "statsmodels",
+    "os",
+    "customtkinter"
 ]
 
 [project.optional-dependencies]
