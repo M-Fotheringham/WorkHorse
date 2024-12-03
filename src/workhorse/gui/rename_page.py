@@ -25,7 +25,7 @@ class GuiFrameRename:
         # Frame setup
         self.frame = ctk.CTkFrame(master=self.master)
         self.frame.pack(pady=20, padx=20, fill="both", expand=True)
-        
+
         # Label
         self.label = ctk.CTkLabel(
             master=self.frame, text=label, font=("Arial", 24)
@@ -45,14 +45,22 @@ class GuiFrameRename:
         self.new_text.pack(pady=12, padx=10)
 
         # Rename inside files checkbox
-        self.inside_check = ctk.CTkCheckBox(master=self.frame, text="Rename inside files?")
+        self.inside_check = ctk.CTkCheckBox(
+            master=self.frame, text="Rename inside files?"
+        )
         self.inside_check.pack(pady=12, padx=10)
-        
+
         # Swap button
         self.swap_button = ctk.CTkButton(
             master=self.frame, text="Swap", command=self.swap
         )
         self.swap_button.pack(pady=12, padx=10)
+
+        # Swap confirmation label
+        self.swapconf_label = ctk.CTkLabel(
+            master=self.frame, text=""
+        )
+        self.swapconf_label.pack(pady=12, padx=10)
 
         # Quit button
         self.quit_button = ctk.CTkButton(
@@ -69,35 +77,17 @@ class GuiFrameRename:
         )
         self.menu_button.pack(pady=24, padx=10)
 
-    # def _create_fields(self, fields):
-    #     """Create input fields in the specified tab."""
-    #     for field in fields:
-    #         field_type = field.get("field_type", "entry")
-    #         text = field.get("text", "Field")
-    #         placeholder = field.get("placeholder", "")
-    #         show = field.get("show", None)
-
-    #         if field_type == "entry":
-    #             entry = ctk.CTkEntry(
-    #                 master=self.frame,
-    #                 placeholder_text=placeholder,
-    #                 show=show,
-    #             )
-
-    #         elif field_type == "combobox":
-    #             entry = ctk.CTkComboBox(master=self.frame, values=placeholder)
-
-    #         else:
-    #             entry = None
-
-    #         if entry:
-    #             entry.pack(pady=12, padx=10)
-    #             self.entries[text] = entry
-
     def swap(self):
         d = directory_selector()
 
-        name_replacer(d, self.original_text.get(), self.new_text.get(), self.inside_check.get())
+        name_replacer(
+            d,
+            self.original_text.get(),
+            self.new_text.get(),
+            self.inside_check.get(),
+        )
+
+        self.swapconf_label.configure(text="Swapped!")
 
     def quit(self):
         self.master.destroy()

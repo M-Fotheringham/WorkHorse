@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import pandas as pd
 from workhorse.meta_functions.directory_selector import directory_selector
+
 # from PIL import Image
 
 
@@ -35,7 +36,7 @@ class GuiFrame:
 
         # background_label = ctk.CTkLabel(self.frame, image=bg_image, text="")
         # background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
-        
+
         # Label
         self.label = ctk.CTkLabel(
             master=self.frame, text=label, font=("Arial", 24)
@@ -101,16 +102,23 @@ class GuiFrame:
             text = field.get("text", "Field")
             placeholder = field.get("placeholder", "")
             show = field.get("show", None)
+            state = field.get("state", "normal")
+            command = field.get("command", None)
+            command = {"enable": self.enable, None: None}[command]
 
             if field_type == "entry":
                 entry = ctk.CTkEntry(
                     master=tab,
                     placeholder_text=placeholder,
                     show=show,
+                    state=state,
                 )
 
             elif field_type == "combobox":
                 entry = ctk.CTkComboBox(master=tab, values=placeholder)
+
+            elif field_type == "checkbox":
+                entry = ctk.CTkCheckBox(master=tab, text=text, command=command)
 
             else:
                 entry = None
@@ -123,10 +131,13 @@ class GuiFrame:
         """Combine input data into a single string."""
 
         if data["PrimCase"] != "":
-            name = f"""{data["PrimCase"]}{data["Primary Ab"]}_{data["Primary dilution factor"]}_{data["Polymer"]}_{data["fluorophore"]}_{data["TSA dilution factor"]}_{data["Primscanner"]}"""
+            name = f"""{data["PrimCase"]}_{data["Primary Ab"]}_1to{data["Primary dilution factor"]}_{data["Polymer"]}_Opal{data["fluorophore"]}_1to{data["TSA dilution factor"]}_{data["Primscanner"]}"""
 
         elif data["IHCCase"] != "":
-            name = f"""{data["IHCCase"]}_{data["Primary Ab"]}_IHC_{data["IHCscanner"]}"""
+            if data["IHC Titration?"]:
+                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_1to{data["IHC Primary dilution factor"]}_IHC_{data["IHCscanner"]}"""
+            else:
+                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_IHC_{data["IHCscanner"]}"""
 
         elif data["MPCase"] != "":
             name = f"""{data["MPCase"]}_MP{data["Multiplex number"]}_{data["MPscanner"]}"""
@@ -175,6 +186,11 @@ class GuiFrame:
         d = directory_selector()
 
         export.to_excel(f"{d}/exported_names.xlsx")
+
+    def enable(self):
+        for widget in self.tab_frame.winfo_children():
+            if isinstance(widget, ctk.CTkEntry):
+                widget.configure(state="normal")
 
     def quit(self):
         self.master.destroy()

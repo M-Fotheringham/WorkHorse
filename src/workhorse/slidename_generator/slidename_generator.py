@@ -42,14 +42,24 @@ def slidename_generator(self):
         ],
         "IHC": [
             {"text": "IHCCase", "placeholder": "Case"},
-            {"text": "Primary Ab", "placeholder": "Primary Ab"},
+            {"text": "IHC Primary Ab", "placeholder": "Primary Ab"},
             {
                 "field_type": "combobox",
                 "text": "IHCscanner",
                 "placeholder": ["", "QUKPolaris_1", "QUKPolaris_2"],
             },
+            {
+                "field_type": "checkbox",
+                "text": "IHC Titration?",
+                "command": "enable",
+            },
+            {
+                "text": "IHC Primary dilution factor",
+                "placeholder": "Primary dilution factor",
+                "state": "normal",
+            },
         ],
-        "Multiplex": [
+        "Multiplex Validation": [
             {"text": "MPCase", "placeholder": "Case"},
             {"text": "Multiplex number", "placeholder": "Multiplex number"},
             {
@@ -71,7 +81,7 @@ def slidename_generator(self):
                 "text": "Otherscanner",
                 "placeholder": ["", "QUKPolaris_1", "QUKPolaris_2"],
             },
-        ]
+        ],
     }
 
     # Main application

@@ -16,22 +16,12 @@ readme = "README.md"
 
 dependencies = [
     "pandas",
-    "os",
     "customtkinter"
 ]
 
 [project.optional-dependencies]
 docs = [
     "ipykernel",
-    "nbsphinx",
-    "pandoc",
-    "py2puml",
-    "pydata-sphinx-theme",
-    "sphinx",
-    "sphinxcontrib-plantuml",
-    "sphinx-autoapi>=3.2",
-    "sphinx-autodoc-typehints",
-    "sphinx-design",
 ]
 test = [
     "black",

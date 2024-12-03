@@ -1,6 +1,10 @@
 import customtkinter as ctk
-from workhorse.slidename_generator.slidename_generator import slidename_generator
+from workhorse.slidename_generator.slidename_generator import (
+    slidename_generator,
+)
 from workhorse.filename_adjuster.filename_adjuster import filename_adjuster
+from workhorse.project_archiver.project_archiver import project_archiver
+
 # from PIL import Image
 
 
@@ -19,6 +23,7 @@ class Menu:
         # self.fields = fields
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("green")
+        self.master.title("WorkHorse")
 
         self.entries = {}
 
@@ -55,6 +60,14 @@ class Menu:
         )
         self.quit_button.pack(pady=12, padx=10)
 
+        # Project Archiver button
+        self.archive_button = ctk.CTkButton(
+            master=self.frame,
+            text="File Archiver",
+            command=self.archiving,
+        )
+        self.archive_button.pack(pady=12, padx=10)
+
         # Quit button
         self.quit_button = ctk.CTkButton(
             master=self.frame, text="Quit", command=self.quit
@@ -70,10 +83,18 @@ class Menu:
         return
 
     def renaming(self):
-        """Will redirect to a window to collect parameters for renaming."""
+        """Redirects to a window to collect parameters for renaming."""
         self.frame.destroy()
 
         filename_adjuster(self)
+
+        return
+
+    def archiving(self):
+        """Will redirect to a window to collect parameters for archiving."""
+        self.frame.destroy()
+
+        project_archiver(self)
 
         return
 
