@@ -65,6 +65,7 @@ class Menu:
             master=self.frame,
             text="File Archiver",
             command=self.archiving,
+            state="disabled"
         )
         self.archive_button.pack(pady=12, padx=10)
 
