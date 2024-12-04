@@ -7,7 +7,7 @@ def slidename_generator(self):
 
     # Define the types of tabs
     field_groups = {
-        "IF Titration": [
+        "IF": [
             {"text": "PrimCase", "placeholder": "Case"},
             {"text": "Primary Ab", "placeholder": "Primary Ab"},
             {
@@ -39,7 +39,7 @@ def slidename_generator(self):
                 "text": "Primscanner",
                 "placeholder": ["", "QUKPolaris_1", "QUKPolaris_2"],
             },
-            {"text": "IFOptional", "placeholder": "Optional condition"}
+            {"text": "IFOptional", "placeholder": "Optional condition"},
         ],
         "IHC": [
             {"text": "IHCCase", "placeholder": "Case"},

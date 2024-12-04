@@ -65,6 +65,11 @@ class GuiFrame:
         )
         self.submit_button.pack(pady=12, padx=10)
 
+        self.reset_button = ctk.CTkButton(
+            master=self.tab_frame, text="Clear", command=self.reset_form
+        )
+        self.reset_button.pack(pady=12, padx=10)
+
         # Result display
         self.result_label = ctk.CTkLabel(
             master=self.result_frame,
@@ -131,13 +136,22 @@ class GuiFrame:
         """Combine input data into a single string."""
 
         if data["PrimCase"] != "":
-            name = f"""{data["PrimCase"]}_{data["Primary Ab"]}_1to{data["Primary dilution factor"]}_{data["Polymer"]}_Opal{data["fluorophore"]}_1to{data["TSA dilution factor"]}_{data["Primscanner"]}"""
+
+            if data["IFOptional"] != "":
+                print(data["IFOptional"])
+                data["IFOptional"] = f"_{data['IFOptional']}"
+
+            name = f"""{data["PrimCase"]}_{data["Primary Ab"]}_1to{data["Primary dilution factor"]}_{data["Polymer"]}_Opal{data["fluorophore"]}_1to{data["TSA dilution factor"]}_{data["Primscanner"]}{data["IFOptional"]}"""
 
         elif data["IHCCase"] != "":
+
+            if data["IHCOptional"] != "":
+                data["IHCOptional"] = f"_{data['IHCOptional']}"
+
             if data["IHC Titration?"]:
-                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_1to{data["IHC Primary dilution factor"]}_IHC_{data["IHCscanner"]}"""
+                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_1to{data["IHC Primary dilution factor"]}_IHC_{data["IHCscanner"]}{data["IHCOptional"]}"""
             else:
-                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_IHC_{data["IHCscanner"]}"""
+                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_IHC_{data["IHCscanner"]}{data["IHCOptional"]}"""
 
         elif data["MPCase"] != "":
             name = f"""{data["MPCase"]}_MP{data["Multiplex number"]}_{data["MPscanner"]}"""
@@ -156,7 +170,8 @@ class GuiFrame:
     def reset_form(self):
         """Clear all input fields."""
         for entry in self.entries.values():
-            entry.delete(0, ctk.END)
+            if isinstance(entry, ctk.CTkEntry):
+                entry.delete(0, ctk.END)
 
     def update_results(self):
         """Update the results display with all submissions."""
@@ -175,8 +190,8 @@ class GuiFrame:
         # Update results display
         self.update_results()
 
-        # Reset the form
-        self.reset_form()
+        # # Reset the form
+        # self.reset_form()
 
     def export(self):
         """Export slide names as xlsx."""
