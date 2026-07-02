@@ -1,219 +1,253 @@
-import customtkinter as ctk
+"""Slide-name generator UI implemented with PySide6."""
+
+from __future__ import annotations
+
+from typing import Any
+
 import pandas as pd
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
 from workhorse.meta_functions.directory_selector import directory_selector
 
-# from PIL import Image
 
+class GuiFrame(QWidget):
+    """Page for building and exporting slide names."""
 
-class GuiFrame:
-    def __init__(self, master, label, field_groups):
-        """
-        Initialize a master GUI with dynamic fields in tabs.
-
-        Args:
-            master: The root or parent window.
-            label: The main title for the GUI.
-            field_groups: A dictionary with field lists as values.
-        """
-
-        self.master = master
+    def __init__(
+        self,
+        window: QWidget,
+        label: str,
+        field_groups: dict[str, list[dict[str, Any]]],
+    ) -> None:
+        super().__init__(window)
+        self.window = window
         self.field_groups = field_groups
-        ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("green")
+        self.entries: dict[str, QWidget] = {}
+        self.submissions: list[str] = []
 
-        self.entries = {}
-        self.submissions = []  # Store submitted strings
+        outer_layout = QVBoxLayout(self)
+        outer_layout.setContentsMargins(24, 24, 24, 24)
+        outer_layout.setSpacing(14)
 
-        # Frame setup
-        self.frame = ctk.CTkFrame(master=self.master)
-        self.frame.pack(pady=20, padx=20, fill="both", expand=True)
+        title = QLabel(label)
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("font-size: 24px; font-weight: 600;")
+        outer_layout.addWidget(title)
 
-        # # Load and resize background image
-        # bg_image = ctk.CTkImage(light_image=Image.open("C:\\Users\\Michael\\
-        # OneDrive - Queen's University\\Documents\\Projects\\Workflow_
-        # Automation\\docs\\_figs\\workhorse_banner.png"), size=(600, 400)
-        # )
+        body_layout = QHBoxLayout()
+        body_layout.setSpacing(18)
+        outer_layout.addLayout(body_layout, stretch=1)
 
-        # background_label = ctk.CTkLabel(self.frame, image=bg_image, text="")
-        # background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.tab_frame = QFrame()
+        self.tab_frame.setFrameShape(QFrame.StyledPanel)
+        tab_layout = QVBoxLayout(self.tab_frame)
+        tab_layout.setContentsMargins(12, 12, 12, 12)
+        body_layout.addWidget(self.tab_frame, stretch=2)
 
-        # Label
-        self.label = ctk.CTkLabel(
-            master=self.frame, text=label, font=("Arial", 24)
-        )
-        self.label.pack(pady=12, padx=10)
+        self.result_frame = QFrame()
+        self.result_frame.setFrameShape(QFrame.StyledPanel)
+        result_layout = QVBoxLayout(self.result_frame)
+        result_layout.setContentsMargins(12, 12, 12, 12)
+        body_layout.addWidget(self.result_frame, stretch=1)
 
-        # Layout for tabs and results
-        self.tab_frame = ctk.CTkFrame(master=self.frame)
-        self.tab_frame.pack(side="left", padx=10, fill="y", expand=True)
+        self.tabview = QTabWidget()
+        tab_layout.addWidget(self.tabview, stretch=1)
 
-        self.result_frame = ctk.CTkFrame(master=self.frame)
-        self.result_frame.pack(side="right", padx=10, fill="y", expand=True)
-
-        # Tabview
-        self.tabview = ctk.CTkTabview(master=self.tab_frame)
-        self.tabview.pack(fill="both", expand=True, pady=10)
-
-        # Create tabs and populate fields
         for group_name, fields in self.field_groups.items():
-            tab = self.tabview.add(group_name)
+            tab = QWidget()
+            tab.setLayout(QVBoxLayout())
+            tab.layout().setAlignment(Qt.AlignTop)
+            tab.layout().setContentsMargins(12, 12, 12, 12)
+            self.tabview.addTab(tab, group_name)
             self._create_fields(tab, fields)
 
-        # Submit button
-        self.submit_button = ctk.CTkButton(
-            master=self.tab_frame, text="Submit", command=self.submit
-        )
-        self.submit_button.pack(pady=12, padx=10)
+        submit_button = QPushButton("Submit")
+        submit_button.clicked.connect(self.submit)
+        tab_layout.addWidget(submit_button)
 
-        self.reset_button = ctk.CTkButton(
-            master=self.tab_frame, text="Clear", command=self.reset_form
-        )
-        self.reset_button.pack(pady=12, padx=10)
+        reset_button = QPushButton("Clear")
+        reset_button.clicked.connect(self.reset_form)
+        tab_layout.addWidget(reset_button)
 
-        # Result display
-        self.result_label = ctk.CTkLabel(
-            master=self.result_frame,
-            text="Slide Names:\n",
-            font=("Arial", 16),
-            justify="left",
-        )
-        self.result_label.pack(pady=12, padx=10)
+        result_title = QLabel("Slide Names")
+        result_title.setStyleSheet("font-size: 16px; font-weight: 600;")
+        result_layout.addWidget(result_title)
 
-        # Export button
-        self.export_button = ctk.CTkButton(
-            master=self.result_frame, text="Export", command=self.export
-        )
-        self.export_button.pack(pady=12, padx=10)
+        self.result_label = QLabel("")
+        self.result_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.result_label.setWordWrap(True)
+        self.result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.result_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # Quit button
-        self.quit_button = ctk.CTkButton(
-            master=self.result_frame, text="Quit", command=self.quit
-        )
-        self.quit_button.pack(pady=24, padx=10)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.result_label)
+        result_layout.addWidget(scroll, stretch=1)
 
-        # Main Menu button
-        self.menu_button = ctk.CTkButton(
-            master=self.result_frame,
-            text="Main Menu",
-            command=self.menu,
-            state="disabled",
-        )
-        self.menu_button.pack(pady=24, padx=10)
+        export_button = QPushButton("Export")
+        export_button.clicked.connect(self.export)
+        result_layout.addWidget(export_button)
 
-    def _create_fields(self, tab, fields):
-        """Create input fields in the specified tab."""
+        quit_button = QPushButton("Quit")
+        quit_button.clicked.connect(self.window.close)
+        result_layout.addWidget(quit_button)
+
+        menu_button = QPushButton("Main Menu")
+        menu_button.clicked.connect(self.window.show_main_menu)
+        result_layout.addWidget(menu_button)
+
+    def _create_fields(self, tab: QWidget, fields: list[dict[str, Any]]) -> None:
+        """Create the input fields for one tab."""
+        layout = tab.layout()
+        assert layout is not None
+
         for field in fields:
             field_type = field.get("field_type", "entry")
             text = field.get("text", "Field")
             placeholder = field.get("placeholder", "")
-            show = field.get("show", None)
             state = field.get("state", "normal")
-            command = field.get("command", None)
-            command = {"enable": self.enable, None: None}[command]
+            command = field.get("command")
+
+            label = QLabel(text)
+            layout.addWidget(label)
 
             if field_type == "entry":
-                entry = ctk.CTkEntry(
-                    master=tab,
-                    placeholder_text=placeholder,
-                    show=show,
-                    state=state,
-                )
-
+                entry = QLineEdit()
+                entry.setPlaceholderText(str(placeholder))
+                entry.setEnabled(state != "disabled")
             elif field_type == "combobox":
-                entry = ctk.CTkComboBox(master=tab, values=placeholder)
-
+                entry = QComboBox()
+                entry.addItems([str(value) for value in placeholder])
+                entry.setEnabled(state != "disabled")
             elif field_type == "checkbox":
-                entry = ctk.CTkCheckBox(master=tab, text=text, command=command)
-
+                entry = QCheckBox(text)
+                label.hide()
+                entry.setEnabled(state != "disabled")
+                if command == "enable":
+                    entry.stateChanged.connect(self.enable)
             else:
-                entry = None
+                continue
 
-            if entry:
-                entry.pack(pady=12, padx=10)
-                self.entries[text] = entry
+            layout.addWidget(entry)
+            self.entries[text] = entry
 
-    def combine_inputs(self, data):
-        """Combine input data into a single string."""
+    @staticmethod
+    def _widget_value(widget: QWidget) -> str | bool:
+        if isinstance(widget, QLineEdit):
+            return widget.text().strip()
+        if isinstance(widget, QComboBox):
+            return widget.currentText().strip()
+        if isinstance(widget, QCheckBox):
+            return widget.isChecked()
+        return ""
 
-        if data["PrimCase"] != "":
+    def combine_inputs(self, data: dict[str, str | bool]) -> str | None:
+        """Combine input values into a WorkHorse slide name."""
+        if data.get("PrimCase"):
+            optional = str(data.get("IFOptional", ""))
+            optional = f"_{optional}" if optional else ""
+            return (
+                f"{data['PrimCase']}_{data['Primary Ab']}_"
+                f"1to{data['Primary dilution factor']}_{data['Polymer']}_"
+                f"Opal{data['fluorophore']}_1to{data['TSA dilution factor']}_"
+                f"{data['Primscanner']}{optional}"
+            )
 
-            if data["IFOptional"] != "":
-                print(data["IFOptional"])
-                data["IFOptional"] = f"_{data['IFOptional']}"
+        if data.get("IHCCase"):
+            optional = str(data.get("IHCOptional", ""))
+            optional = f"_{optional}" if optional else ""
+            if bool(data.get("IHC Titration?")):
+                return (
+                    f"{data['IHCCase']}_{data['IHC Primary Ab']}_"
+                    f"1to{data['IHC Primary dilution factor']}_"
+                    f"IHC_{data['IHCscanner']}{optional}"
+                )
+            return (
+                f"{data['IHCCase']}_{data['IHC Primary Ab']}_"
+                f"IHC_{data['IHCscanner']}{optional}"
+            )
 
-            name = f"""{data["PrimCase"]}_{data["Primary Ab"]}_1to{data["Primary dilution factor"]}_{data["Polymer"]}_Opal{data["fluorophore"]}_1to{data["TSA dilution factor"]}_{data["Primscanner"]}{data["IFOptional"]}"""
+        if data.get("MPCase"):
+            return (
+                f"{data['MPCase']}_MP{data['Multiplex number']}_"
+                f"{data['MPscanner']}"
+            )
 
-        elif data["IHCCase"] != "":
+        if data.get("CSnumber"):
+            return f"CS{data['CSnumber']}_{data['Slidenumber']}"
 
-            if data["IHCOptional"] != "":
-                data["IHCOptional"] = f"_{data['IHCOptional']}"
+        if data.get("OtherCase"):
+            return (
+                f"{data['OtherCase']}_{data['section']}_"
+                f"{data['Condition']}_{data['Otherscanner']}"
+            )
 
-            if data["IHC Titration?"]:
-                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_1to{data["IHC Primary dilution factor"]}_IHC_{data["IHCscanner"]}{data["IHCOptional"]}"""
-            else:
-                name = f"""{data["IHCCase"]}_{data["IHC Primary Ab"]}_IHC_{data["IHCscanner"]}{data["IHCOptional"]}"""
+        return None
 
-        elif data["MPCase"] != "":
-            name = f"""{data["MPCase"]}_MP{data["Multiplex number"]}_{data["MPscanner"]}"""
-
-        elif data["CSnumber"] != "":
-            name = f"""CS{data["CSnumber"]}_{data["Slidenumber"]}"""
-
-        elif data["OtherCase"] != "":
-            name = f"""{data["OtherCase"]}_{data["section"]}_{data["condition"]}_{data["Otherscanner"]}"""
-
-        else:
-            name = None
-
-        return name
-
-    def reset_form(self):
-        """Clear all input fields."""
+    def reset_form(self) -> None:
+        """Clear all inputs."""
         for entry in self.entries.values():
-            if isinstance(entry, ctk.CTkEntry):
-                entry.delete(0, ctk.END)
+            if isinstance(entry, QLineEdit):
+                entry.clear()
+            elif isinstance(entry, QComboBox):
+                entry.setCurrentIndex(0)
+            elif isinstance(entry, QCheckBox):
+                entry.setChecked(False)
 
-    def update_results(self):
-        """Update the results display with all submissions."""
-        submissions_text = "\n".join(self.submissions)
-        self.result_label.configure(text=f"Slide Names:\n{submissions_text}")
+    def update_results(self) -> None:
+        """Refresh the submitted slide-name list."""
+        self.result_label.setText("\n".join(self.submissions))
 
-    def submit(self):
-        """Process inputs, update results, and reset the form."""
-        # Collect data
-        data = {text: entry.get() for text, entry in self.entries.items()}
-
-        # Combine data into a string
+    def submit(self) -> None:
+        """Build one slide name and add it to the results pane."""
+        data = {text: self._widget_value(entry) for text, entry in self.entries.items()}
         submission = self.combine_inputs(data)
-        self.submissions.append(submission)
 
-        # Update results display
+        if not submission:
+            QMessageBox.warning(
+                self,
+                "No slide name generated",
+                "Fill in the case field for one tab, then click Submit.",
+            )
+            return
+
+        self.submissions.append(submission)
         self.update_results()
 
-        # # Reset the form
-        # self.reset_form()
+    def export(self) -> None:
+        """Export submitted slide names to an Excel workbook."""
+        if not self.submissions:
+            QMessageBox.information(self, "Nothing to export", "No slide names have been submitted.")
+            return
 
-    def export(self):
-        """Export slide names as xlsx."""
-        # Get submissions as pandas df
-        export = pd.DataFrame({"Slide_Name": self.submissions})
+        directory = directory_selector(parent=self)
+        if not directory:
+            return
 
-        d = directory_selector()
+        output_path = f"{directory}/exported_names.xlsx"
+        pd.DataFrame({"Slide_Name": self.submissions}).to_excel(output_path, index=False)
+        QMessageBox.information(self, "Export complete", f"Saved to:\n{output_path}")
 
-        export.to_excel(f"{d}/exported_names.xlsx")
-
-    def enable(self):
-        for widget in self.tab_frame.winfo_children():
-            if isinstance(widget, ctk.CTkEntry):
-                widget.configure(state="normal")
-
-    def quit(self):
-        self.master.destroy()
-
-    def menu(self):
-        self.result_frame.destroy()
-        self.tab_frame.destroy()
-
-        from workhorse.gui.main_menu import Menu
-
-        app = Menu(master=self.master, label="Main Menu")
+    def enable(self) -> None:
+        """Enable/disable the IHC dilution field based on the titration checkbox."""
+        checkbox = self.entries.get("IHC Titration?")
+        dilution = self.entries.get("IHC Primary dilution factor")
+        if isinstance(checkbox, QCheckBox) and isinstance(dilution, QLineEdit):
+            dilution.setEnabled(checkbox.isChecked())
+            if not checkbox.isChecked():
+                dilution.clear()
