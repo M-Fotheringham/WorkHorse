@@ -1,103 +1,81 @@
-import customtkinter as ctk
-from workhorse.slidename_generator.slidename_generator import (
-    slidename_generator,
+"""Main menu and application shell for the WorkHorse PySide6 app."""
+
+from __future__ import annotations
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtGui import QPixmap
+
 from workhorse.filename_adjuster.filename_adjuster import filename_adjuster
 from workhorse.project_archiver.project_archiver import project_archiver
+from workhorse.slidename_generator.slidename_generator import slidename_generator
 
-# from PIL import Image
+
+class WorkHorseWindow(QMainWindow):
+    """Top-level Qt window that swaps between WorkHorse pages."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setWindowTitle("WorkHorse")
+        self.resize(900, 600)
+        self.show_main_menu()
+
+    def _set_page(self, page: QWidget) -> None:
+        self.setCentralWidget(page)
+
+    def show_main_menu(self) -> None:
+        self._set_page(Menu(self, label="Main Menu"))
+
+    def show_slide_name_generator(self) -> None:
+        self._set_page(slidename_generator(self))
+
+    def show_filename_adjuster(self) -> None:
+        self._set_page(filename_adjuster(self))
+
+    def show_project_archiver(self) -> None:
+        self._set_page(project_archiver(self))
 
 
-class Menu:
-    def __init__(self, master, label):
-        """
-        Initialize a master GUI with dynamic fields in tabs.
+class Menu(QWidget):
+    """Main menu page."""
 
-        Args:
-            master: The root or parent window.
-            label: The main title for the GUI.
-            fields: A dictionary with field lists as values.
-        """
+    def __init__(self, window: WorkHorseWindow, label: str) -> None:
+        super().__init__(window)
+        self.window = window
+        
 
-        self.master = master
-        # self.fields = fields
-        ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("green")
-        self.master.title("WorkHorse")
+        layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setSpacing(14)
+        layout.setContentsMargins(24, 24, 24, 24)
 
-        self.entries = {}
+        title = QLabel(label)
+        title.setAlignment(Qt.AlignCenter)
+        title.setObjectName("pageTitle")
+        title.setStyleSheet("font-size: 24px; font-weight: 600;")
+        layout.addWidget(title)
 
-        # Frame setup
-        self.frame = ctk.CTkFrame(master=self.master)
-        self.frame.pack(pady=20, padx=20, fill="both", expand=True)
+        slide_button = QPushButton("Slide Name Generator")
+        slide_button.clicked.connect(self.window.show_slide_name_generator)
+        layout.addWidget(slide_button)
 
-        # # Load and resize background image
-        # bg_image = ctk.CTkImage(light_image=Image.open("C:\\Users\\Michael\\
-        # OneDrive - Queen's University\\Documents\\Projects\\Workflow_
-        # Automation\\docs\\_figs\\workhorse_banner.png"), size=(600, 400)
-        # )
+        rename_button = QPushButton("File Name Adjuster")
+        rename_button.clicked.connect(self.window.show_filename_adjuster)
+        layout.addWidget(rename_button)
 
-        # background_label = ctk.CTkLabel(self.frame, image=bg_image, text="")
-        # background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        archive_button = QPushButton("File Archiver")
+        archive_button.clicked.connect(self.window.show_project_archiver)
+        archive_button.setEnabled(False)
+        layout.addWidget(archive_button)
 
-        # Label
-        self.label = ctk.CTkLabel(
-            master=self.frame, text=label, font=("Arial", 24)
-        )
-        self.label.pack(pady=12, padx=10)
+        quit_button = QPushButton("Quit")
+        quit_button.clicked.connect(QApplication.instance().quit)
+        layout.addWidget(quit_button)
 
-        # Slide Name Generator button
-        self.quit_button = ctk.CTkButton(
-            master=self.frame, text="Slide Name Generator", command=self.naming
-        )
-        self.quit_button.pack(pady=12, padx=10)
-
-        # File Name Adjuster button
-        self.quit_button = ctk.CTkButton(
-            master=self.frame,
-            text="File Name Adjuster",
-            command=self.renaming,
-        )
-        self.quit_button.pack(pady=12, padx=10)
-
-        # Project Archiver button
-        self.archive_button = ctk.CTkButton(
-            master=self.frame,
-            text="File Archiver",
-            command=self.archiving,
-            state="disabled"
-        )
-        self.archive_button.pack(pady=12, padx=10)
-
-        # Quit button
-        self.quit_button = ctk.CTkButton(
-            master=self.frame, text="Quit", command=self.quit
-        )
-        self.quit_button.pack(pady=24, padx=10)
-
-    def naming(self):
-        """Redirects to a window to collect parameters for slide naming."""
-        self.frame.destroy()
-
-        slidename_generator(self)
-
-        return
-
-    def renaming(self):
-        """Redirects to a window to collect parameters for renaming."""
-        self.frame.destroy()
-
-        filename_adjuster(self)
-
-        return
-
-    def archiving(self):
-        """Will redirect to a window to collect parameters for archiving."""
-        self.frame.destroy()
-
-        project_archiver(self)
-
-        return
-
-    def quit(self):
-        self.master.destroy()

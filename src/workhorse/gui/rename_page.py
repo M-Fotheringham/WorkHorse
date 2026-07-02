@@ -1,101 +1,88 @@
-import customtkinter as ctk
-import pandas as pd
+"""Filename text-swapper UI implemented with PySide6."""
+
+from __future__ import annotations
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
 from workhorse.meta_functions.directory_selector import directory_selector
 from workhorse.meta_functions.name_replacer import name_replacer
 
 
-class GuiFrameRename:
-    def __init__(self, master, label):
-        """
-        Initialize a master GUI with dynamic fields in tabs.
+class GuiFrameRename(QWidget):
+    """Page for replacing text in filenames and optionally inside text files."""
 
-        Args:
-            master: The root or parent window.
-            label: The main title for the GUI.
-            field_groups: A dictionary with field lists as values.
-        """
+    def __init__(self, window: QWidget, label: str) -> None:
+        super().__init__(window)
+        self.window = window
 
-        self.master = master
-        # self.fields = fields
-        ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("green")
+        layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignTop)
+        layout.setSpacing(12)
+        layout.setContentsMargins(24, 24, 24, 24)
 
-        self.entries = {}
+        title = QLabel(label)
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("font-size: 24px; font-weight: 600;")
+        layout.addWidget(title)
 
-        # Frame setup
-        self.frame = ctk.CTkFrame(master=self.master)
-        self.frame.pack(pady=20, padx=20, fill="both", expand=True)
+        self.original_text = QLineEdit()
+        self.original_text.setPlaceholderText("Original Text")
+        layout.addWidget(self.original_text)
 
-        # Label
-        self.label = ctk.CTkLabel(
-            master=self.frame, text=label, font=("Arial", 24)
-        )
-        self.label.pack(pady=12, padx=10)
+        self.new_text = QLineEdit()
+        self.new_text.setPlaceholderText("New Text")
+        layout.addWidget(self.new_text)
 
-        # Original text
-        self.original_text = ctk.CTkEntry(
-            master=self.frame, placeholder_text="Original Text"
-        )
-        self.original_text.pack(pady=12, padx=10)
+        self.inside_check = QCheckBox("Rename inside .txt files?")
+        layout.addWidget(self.inside_check)
 
-        # New text
-        self.new_text = ctk.CTkEntry(
-            master=self.frame, placeholder_text="New Text"
-        )
-        self.new_text.pack(pady=12, padx=10)
+        swap_button = QPushButton("Swap")
+        swap_button.clicked.connect(self.swap)
+        layout.addWidget(swap_button)
 
-        # Rename inside files checkbox
-        self.inside_check = ctk.CTkCheckBox(
-            master=self.frame, text="Rename inside files?"
-        )
-        self.inside_check.pack(pady=12, padx=10)
+        self.swapconf_label = QLabel("")
+        self.swapconf_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.swapconf_label)
 
-        # Swap button
-        self.swap_button = ctk.CTkButton(
-            master=self.frame, text="Swap", command=self.swap
-        )
-        self.swap_button.pack(pady=12, padx=10)
+        quit_button = QPushButton("Quit")
+        quit_button.clicked.connect(self.window.close)
+        layout.addWidget(quit_button)
 
-        # Swap confirmation label
-        self.swapconf_label = ctk.CTkLabel(
-            master=self.frame, text=""
-        )
-        self.swapconf_label.pack(pady=12, padx=10)
+        menu_button = QPushButton("Main Menu")
+        menu_button.clicked.connect(self.window.show_main_menu)
+        layout.addWidget(menu_button)
 
-        # Quit button
-        self.quit_button = ctk.CTkButton(
-            master=self.frame, text="Quit", command=self.quit
-        )
-        self.quit_button.pack(pady=24, padx=10)
+    def swap(self) -> None:
+        """Select a directory and perform the requested text swap."""
+        original = self.original_text.text()
+        new = self.new_text.text()
 
-        # Main Menu button
-        self.menu_button = ctk.CTkButton(
-            master=self.frame,
-            text="Main Menu",
-            command=self.menu,
-            state="disabled",
-        )
-        self.menu_button.pack(pady=24, padx=10)
+        if not original:
+            QMessageBox.warning(self, "Missing text", "Enter text to replace first.")
+            return
 
-    def swap(self):
-        d = directory_selector()
+        directory = directory_selector(parent=self)
+        if not directory:
+            return
 
-        name_replacer(
-            d,
-            self.original_text.get(),
-            self.new_text.get(),
-            self.inside_check.get(),
-        )
+        try:
+            count = name_replacer(
+                directory,
+                original,
+                new,
+                self.inside_check.isChecked(),
+            )
+        except Exception as exc:  # pragma: no cover - shown to user in GUI
+            QMessageBox.critical(self, "Swap failed", str(exc))
+            return
 
-        self.swapconf_label.configure(text="Swapped!")
-
-    def quit(self):
-        self.master.destroy()
-
-    def menu(self):
-        self.frame.destroy()
-        self.frame.destroy()
-
-        from workhorse.gui.main_menu import Menu
-
-        app = Menu(master=self.master, label="Main Menu")
+        self.swapconf_label.setText(f"Swapped {count} file name(s).")

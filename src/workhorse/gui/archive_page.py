@@ -1,134 +1,101 @@
-import customtkinter as ctk
-from workhorse.meta_functions.directory_selector import directory_selector
+"""Project archiver UI implemented with PySide6."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
 from workhorse.meta_functions.directory_copier import directory_copier
+from workhorse.meta_functions.directory_selector import directory_selector
 
 
-class GuiArchive:
-    def __init__(self, master, label, fields):
-        """
-        Initialize a master GUI with dynamic fields in tabs.
+class GuiArchive(QWidget):
+    """Prototype page for collecting archiver directories."""
 
-        Args:
-            master: The root or parent window.
-            label: The main title for the GUI.
-        """
-
-        self.master = master
+    def __init__(
+        self,
+        window: QWidget,
+        label: str,
+        fields: list[dict[str, Any]],
+    ) -> None:
+        super().__init__(window)
+        self.window = window
         self.fields = fields
-        ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("green")
+        self.directory: dict[str, str] = {}
+        self.buttons: dict[str, QPushButton] = {}
 
-        # Frame setup
-        self.frame = ctk.CTkFrame(master=self.master)
-        self.frame.pack(pady=20, padx=20, fill="both", expand=True)
+        layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignTop)
+        layout.setSpacing(12)
+        layout.setContentsMargins(24, 24, 24, 24)
 
-        # Label
-        self.label = ctk.CTkLabel(
-            master=self.frame, text=label, font=("Arial", 24)
-        )
-        self.label.pack(pady=12, padx=10)
+        title = QLabel(label)
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("font-size: 24px; font-weight: 600;")
+        layout.addWidget(title)
 
-        # Store entries as dictionary
-        self.entries = {}
-        self.directory = {}
-
-        # Create tabs and populate fields
-        self._create_fields(self.fields)
-
-        # Quit button
-        self.quit_button = ctk.CTkButton(
-            master=self.frame, text="Quit", command=self.quit
-        )
-        self.quit_button.pack(pady=24, padx=10)
-
-        # Main Menu button
-        self.menu_button = ctk.CTkButton(
-            master=self.frame,
-            text="Main Menu",
-            command=self.menu,
-            state="disabled",
-        )
-        self.menu_button.pack(pady=24, padx=10)
-
-    def _create_fields(self, fields):
-        """Create input fields in the specified tab."""
+        self.status_label = QLabel("")
+        self.status_label.setAlignment(Qt.AlignCenter)
 
         for field in fields:
             field_type = field.get("field_type", "entry")
             text = field.get("text", "Field")
-            placeholder = field.get("placeholder", "")
-            show = field.get("show", None)
-            state = field.get("state", "normal")
 
-            if field_type == "entry":
-                entry = ctk.CTkEntry(
-                    master=self.frame,
-                    placeholder_text=placeholder,
-                    show=show,
-                )
-
-            elif field_type == "combobox":
-                entry = ctk.CTkComboBox(master=self.frame, values=placeholder)
-
-            elif field_type == "dir_button":
-                entry = ctk.CTkButton(
-                    master=self.frame,
-                    text=text,
-                    state=state,
-                    command=lambda t=text: self.dir_select(t),
-                )
-
+            if field_type == "dir_button":
+                button = QPushButton(text)
+                button.clicked.connect(lambda checked=False, t=text: self.dir_select(t))
+                self.buttons[text] = button
+                layout.addWidget(button)
             elif field_type == "submit_button":
-                entry = ctk.CTkButton(
-                    master=self.frame,
-                    text=text,
-                    state=state,
-                    command=self.submit,
-                )
+                button = QPushButton(text)
+                button.clicked.connect(self.submit)
+                layout.addWidget(button)
 
-            else:
-                entry = None
+        layout.addWidget(self.status_label)
 
-            if entry:
-                entry.pack(pady=12, padx=10)
-                self.entries[text] = entry
+        quit_button = QPushButton("Quit")
+        quit_button.clicked.connect(self.window.close)
+        layout.addWidget(quit_button)
 
-    def dir_select(self, text):
+        menu_button = QPushButton("Main Menu")
+        menu_button.clicked.connect(self.window.show_main_menu)
+        layout.addWidget(menu_button)
 
-        d = directory_selector()
+    def dir_select(self, text: str) -> None:
+        """Select a directory for one archive role."""
+        directory = directory_selector(parent=self)
+        if not directory:
+            return
+        self.directory[text] = directory
+        self.buttons[text].setText(f"✓ {text}")
 
-        self.directory[text] = d
+    def submit(self) -> None:
+        """Run the archiver backend when all directories have been selected."""
+        required = [
+            "Select LOCAL 'experiment' folder",
+            "Select GRAID 'data' folder",
+            "Select TEAMS 'data' folder",
+        ]
+        missing = [label for label in required if not self.directory.get(label)]
+        if missing:
+            QMessageBox.warning(
+                self,
+                "Missing directories",
+                "Select all required directories before archiving.",
+            )
+            return
 
-    def submit(self):
-        local_dir = self.directory["Select LOCAL 'experiment' folder"]
-        graid_dir = self.directory["Select GRAID 'data' folder"]
-        teams_dir = self.directory["Select TEAMS 'data' folder"]
-
-        # Another module
-
-    def quit(self):
-        self.master.destroy()
-
-    def menu(self):
-        self.frame.destroy()
-
-        from workhorse.gui.main_menu import Menu
-
-        app = Menu(master=self.master, label="Main Menu")
-
-
-fields = [
-    {
-        "field_type": "dir_button",
-        "text": "Select LOCAL 'experiment' folder",
-    },
-    {
-        "field_type": "dir_button",
-        "text": "Select GRAID 'data' folder",
-    },
-    {
-        "field_type": "dir_button",
-        "text": "Select TEAMS 'data' folder",
-    },
-    {"field_type": "submit_button", "text": "Archive!"},
-]
+        directory_copier(
+            self.directory[required[0]],
+            self.directory[required[1]],
+            self.directory[required[2]],
+        )
+        self.status_label.setText("Archive request submitted.")

@@ -5,18 +5,14 @@ requires = ["hatchling", "hatch-vcs"]
 [project]
 name = "workhorse"
 description = ""
-
-authors = [{name = "MF"}]
-maintainers = [{name = "Michael Fotheringham", email = "16mrf6@queensu.ca"}]
-
+authors = [{ name = "MF" }]
+maintainers = [{ name = "Michael Fotheringham", email = "16mrf6@queensu.ca" }]
 dynamic = ["version"]
-
-# license = {file = "LICENSE"}
 readme = "README.md"
-
 dependencies = [
     "pandas",
-    "customtkinter"
+    "openpyxl",
+    "PySide6",
 ]
 
 [project.optional-dependencies]
