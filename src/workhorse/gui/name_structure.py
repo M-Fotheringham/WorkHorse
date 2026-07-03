@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from pathlib import Path
 
 import pandas as pd
 from PySide6.QtCore import Qt
@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 )
 
 from workhorse.meta_functions.directory_selector import directory_selector
+from workhorse.slidename_generator.panels import FieldSpec, FieldValue, PanelSpec
 
 
 class GuiFrame(QWidget):
@@ -32,12 +33,13 @@ class GuiFrame(QWidget):
         self,
         window: QWidget,
         label: str,
-        field_groups: dict[str, list[dict[str, Any]]],
+        panels: tuple[PanelSpec, ...],
     ) -> None:
         super().__init__(window)
         self.window = window
-        self.field_groups = field_groups
-        self.entries: dict[str, QWidget] = {}
+        self.panel_specs = {panel.id: panel for panel in panels}
+        self.panel_order = [panel.id for panel in panels]
+        self.entries: dict[str, dict[str, QWidget]] = {}
         self.submissions: list[str] = []
 
         outer_layout = QVBoxLayout(self)
@@ -68,21 +70,26 @@ class GuiFrame(QWidget):
         self.tabview = QTabWidget()
         tab_layout.addWidget(self.tabview, stretch=1)
 
-        for group_name, fields in self.field_groups.items():
+        for panel in panels:
+            self.entries[panel.id] = {}
             tab = QWidget()
-            tab.setLayout(QVBoxLayout())
-            tab.layout().setAlignment(Qt.AlignTop)
-            tab.layout().setContentsMargins(12, 12, 12, 12)
-            self.tabview.addTab(tab, group_name)
-            self._create_fields(tab, fields)
+            tab_layout_inner = QVBoxLayout(tab)
+            tab_layout_inner.setAlignment(Qt.AlignTop)
+            tab_layout_inner.setContentsMargins(12, 12, 12, 12)
+            self.tabview.addTab(tab, panel.title)
+            self._create_fields(tab, panel)
 
         submit_button = QPushButton("Submit")
         submit_button.clicked.connect(self.submit)
         tab_layout.addWidget(submit_button)
 
-        reset_button = QPushButton("Clear")
-        reset_button.clicked.connect(self.reset_form)
+        reset_button = QPushButton("Clear Current Tab")
+        reset_button.clicked.connect(self.reset_current_form)
         tab_layout.addWidget(reset_button)
+
+        reset_all_button = QPushButton("Clear All Tabs")
+        reset_all_button.clicked.connect(self.reset_all_forms)
+        tab_layout.addWidget(reset_all_button)
 
         result_title = QLabel("Slide Names")
         result_title.setStyleSheet("font-size: 16px; font-weight: 600;")
@@ -111,43 +118,68 @@ class GuiFrame(QWidget):
         menu_button.clicked.connect(self.window.show_main_menu)
         result_layout.addWidget(menu_button)
 
-    def _create_fields(self, tab: QWidget, fields: list[dict[str, Any]]) -> None:
+    def _create_fields(self, tab: QWidget, panel: PanelSpec) -> None:
         """Create the input fields for one tab."""
         layout = tab.layout()
         assert layout is not None
 
-        for field in fields:
-            field_type = field.get("field_type", "entry")
-            text = field.get("text", "Field")
-            placeholder = field.get("placeholder", "")
-            state = field.get("state", "normal")
-            command = field.get("command")
-
-            label = QLabel(text)
+        for field in panel.fields:
+            label = QLabel(field.label)
             layout.addWidget(label)
 
-            if field_type == "entry":
-                entry = QLineEdit()
-                entry.setPlaceholderText(str(placeholder))
-                entry.setEnabled(state != "disabled")
-            elif field_type == "combobox":
-                entry = QComboBox()
-                entry.addItems([str(value) for value in placeholder])
-                entry.setEnabled(state != "disabled")
-            elif field_type == "checkbox":
-                entry = QCheckBox(text)
+            entry = self._create_widget(field)
+            if isinstance(entry, QCheckBox):
                 label.hide()
-                entry.setEnabled(state != "disabled")
-                if command == "enable":
-                    entry.stateChanged.connect(self.enable)
-            else:
-                continue
+                if field.enables:
+                    entry.stateChanged.connect(
+                        lambda _state=0, controller=entry, target_id=field.enables: (
+                            self._sync_enabled_field(controller, panel.id, target_id)
+                        )
+                    )
 
             layout.addWidget(entry)
-            self.entries[text] = entry
+            self.entries[panel.id][field.id] = entry
 
     @staticmethod
-    def _widget_value(widget: QWidget) -> str | bool:
+    def _create_widget(field: FieldSpec) -> QWidget:
+        """Create the Qt widget for one field spec."""
+        if field.field_type == "entry":
+            entry = QLineEdit()
+            entry.setPlaceholderText(str(field.placeholder))
+        elif field.field_type == "combobox":
+            entry = QComboBox()
+            if isinstance(field.placeholder, str):
+                entry.addItem(field.placeholder)
+            else:
+                entry.addItems([str(value) for value in field.placeholder])
+        elif field.field_type == "checkbox":
+            entry = QCheckBox(field.label)
+        else:  # pragma: no cover - Literal typing should prevent this.
+            raise ValueError(f"Unsupported field type: {field.field_type}")
+
+        entry.setEnabled(field.enabled)
+        return entry
+
+    def _current_panel_id(self) -> str:
+        """Return the internal id for the currently selected tab."""
+        return self.panel_order[self.tabview.currentIndex()]
+
+    def _sync_enabled_field(
+        self,
+        controller: QCheckBox,
+        panel_id: str,
+        target_id: str,
+    ) -> None:
+        """Enable/disable a target field from a checkbox in the same panel."""
+        target = self.entries[panel_id].get(target_id)
+
+        if isinstance(target, QLineEdit):
+            target.setEnabled(controller.isChecked())
+            if not controller.isChecked():
+                target.clear()
+
+    @staticmethod
+    def _widget_value(widget: QWidget) -> FieldValue:
         if isinstance(widget, QLineEdit):
             return widget.text().strip()
         if isinstance(widget, QComboBox):
@@ -156,52 +188,26 @@ class GuiFrame(QWidget):
             return widget.isChecked()
         return ""
 
-    def combine_inputs(self, data: dict[str, str | bool]) -> str | None:
-        """Combine input values into a WorkHorse slide name."""
-        if data.get("PrimCase"):
-            optional = str(data.get("IFOptional", ""))
-            optional = f"_{optional}" if optional else ""
-            return (
-                f"{data['PrimCase']}_{data['Primary Ab']}_"
-                f"1to{data['Primary dilution factor']}_{data['Polymer']}_"
-                f"Opal{data['fluorophore']}_1to{data['TSA dilution factor']}_"
-                f"{data['Primscanner']}{optional}"
-            )
+    def _panel_values(self, panel_id: str) -> dict[str, FieldValue]:
+        """Return values from a single panel only."""
+        return {
+            field_id: self._widget_value(entry)
+            for field_id, entry in self.entries[panel_id].items()
+        }
 
-        if data.get("IHCCase"):
-            optional = str(data.get("IHCOptional", ""))
-            optional = f"_{optional}" if optional else ""
-            if bool(data.get("IHC Titration?")):
-                return (
-                    f"{data['IHCCase']}_{data['IHC Primary Ab']}_"
-                    f"1to{data['IHC Primary dilution factor']}_"
-                    f"IHC_{data['IHCscanner']}{optional}"
-                )
-            return (
-                f"{data['IHCCase']}_{data['IHC Primary Ab']}_"
-                f"IHC_{data['IHCscanner']}{optional}"
-            )
+    def reset_current_form(self) -> None:
+        """Clear inputs on the currently selected tab."""
+        self._reset_entries(self.entries[self._current_panel_id()])
 
-        if data.get("MPCase"):
-            return (
-                f"{data['MPCase']}_MP{data['Multiplex number']}_"
-                f"{data['MPscanner']}"
-            )
+    def reset_all_forms(self) -> None:
+        """Clear inputs on every tab."""
+        for panel_entries in self.entries.values():
+            self._reset_entries(panel_entries)
 
-        if data.get("CSnumber"):
-            return f"CS{data['CSnumber']}_{data['Slidenumber']}"
-
-        if data.get("OtherCase"):
-            return (
-                f"{data['OtherCase']}_{data['section']}_"
-                f"{data['Condition']}_{data['Otherscanner']}"
-            )
-
-        return None
-
-    def reset_form(self) -> None:
-        """Clear all inputs."""
-        for entry in self.entries.values():
+    @staticmethod
+    def _reset_entries(entries: dict[str, QWidget]) -> None:
+        """Clear a dictionary of input widgets."""
+        for entry in entries.values():
             if isinstance(entry, QLineEdit):
                 entry.clear()
             elif isinstance(entry, QComboBox):
@@ -214,15 +220,16 @@ class GuiFrame(QWidget):
         self.result_label.setText("\n".join(self.submissions))
 
     def submit(self) -> None:
-        """Build one slide name and add it to the results pane."""
-        data = {text: self._widget_value(entry) for text, entry in self.entries.items()}
-        submission = self.combine_inputs(data)
+        """Build one slide name from the current tab and add it to the results pane."""
+        panel_id = self._current_panel_id()
+        panel = self.panel_specs[panel_id]
+        submission = panel.build_name(self._panel_values(panel_id))
 
         if not submission:
             QMessageBox.warning(
                 self,
                 "No slide name generated",
-                "Fill in the case field for one tab, then click Submit.",
+                "Fill in the case field for the current tab, then click Submit.",
             )
             return
 
@@ -232,22 +239,17 @@ class GuiFrame(QWidget):
     def export(self) -> None:
         """Export submitted slide names to an Excel workbook."""
         if not self.submissions:
-            QMessageBox.information(self, "Nothing to export", "No slide names have been submitted.")
+            QMessageBox.information(
+                self,
+                "Nothing to export",
+                "No slide names have been submitted.",
+            )
             return
 
         directory = directory_selector(parent=self)
         if not directory:
             return
 
-        output_path = f"{directory}/exported_names.xlsx"
+        output_path = Path(directory) / "exported_names.xlsx"
         pd.DataFrame({"Slide_Name": self.submissions}).to_excel(output_path, index=False)
         QMessageBox.information(self, "Export complete", f"Saved to:\n{output_path}")
-
-    def enable(self) -> None:
-        """Enable/disable the IHC dilution field based on the titration checkbox."""
-        checkbox = self.entries.get("IHC Titration?")
-        dilution = self.entries.get("IHC Primary dilution factor")
-        if isinstance(checkbox, QCheckBox) and isinstance(dilution, QLineEdit):
-            dilution.setEnabled(checkbox.isChecked())
-            if not checkbox.isChecked():
-                dilution.clear()

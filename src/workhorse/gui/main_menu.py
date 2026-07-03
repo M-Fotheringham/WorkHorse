@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtGui import QPixmap
 
 from workhorse.filename_adjuster.filename_adjuster import filename_adjuster
 from workhorse.project_archiver.project_archiver import project_archiver
@@ -49,7 +48,6 @@ class Menu(QWidget):
     def __init__(self, window: WorkHorseWindow, label: str) -> None:
         super().__init__(window)
         self.window = window
-        
 
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
@@ -78,4 +76,3 @@ class Menu(QWidget):
         quit_button = QPushButton("Quit")
         quit_button.clicked.connect(QApplication.instance().quit)
         layout.addWidget(quit_button)
-
