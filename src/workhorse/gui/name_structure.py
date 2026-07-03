@@ -195,6 +195,43 @@ class GuiFrame(QWidget):
             for field_id, entry in self.entries[panel_id].items()
         }
 
+    def _field_is_required(self, panel_id: str, field: FieldSpec) -> bool:
+        """Return whether a field on one panel must be filled before submission."""
+        if not field.required:
+            return False
+
+        # Checkboxes are controls, not text values the user must fill.
+        if field.field_type == "checkbox":
+            return False
+
+        entry = self.entries[panel_id].get(field.id)
+
+        # Disabled fields are not currently applicable. This keeps the IHC
+        # primary dilution field optional until the titration checkbox enables it.
+        if entry is not None and not entry.isEnabled():
+            return False
+
+        return True
+
+    def _missing_required_fields(self, panel_id: str) -> list[str]:
+        """Return blank required fields for the currently selected panel only."""
+        panel = self.panel_specs[panel_id]
+        missing: list[str] = []
+
+        for field in panel.fields:
+            if not self._field_is_required(panel_id, field):
+                continue
+
+            entry = self.entries[panel_id].get(field.id)
+            if entry is None:
+                continue
+
+            value = self._widget_value(entry)
+            if value == "":
+                missing.append(field.label)
+
+        return missing
+
     def reset_current_form(self) -> None:
         """Clear inputs on the currently selected tab."""
         self._reset_entries(self.entries[self._current_panel_id()])
@@ -222,6 +259,17 @@ class GuiFrame(QWidget):
     def submit(self) -> None:
         """Build one slide name from the current tab and add it to the results pane."""
         panel_id = self._current_panel_id()
+        missing = self._missing_required_fields(panel_id)
+
+        if missing:
+            QMessageBox.warning(
+                self,
+                "Missing required fields",
+                "Please fill in the following fields before submitting:\n\n"
+                + "\n".join(f"- {field}" for field in missing),
+            )
+            return
+
         panel = self.panel_specs[panel_id]
         submission = panel.build_name(self._panel_values(panel_id))
 

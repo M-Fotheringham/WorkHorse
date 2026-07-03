@@ -30,6 +30,7 @@ class FieldSpec:
     field_type: FieldType = "entry"
     enabled: bool = True
     enables: str | None = None
+    required: bool = True
 
 
 @dataclass(frozen=True)
@@ -135,7 +136,7 @@ PANEL_SPECS: tuple[PanelSpec, ...] = (
             FieldSpec("fluorophore", "Fluorophore", FLUOROPHORES, field_type="combobox"),
             FieldSpec("tsa_dilution", "TSA dilution factor", "TSA dilution factor"),
             FieldSpec("scanner", "Scanner", SCANNERS, field_type="combobox"),
-            FieldSpec("optional", "Optional condition", "Optional condition"),
+            FieldSpec("optional", "Optional condition", "Optional condition", required=False),
         ),
         build_name=build_if_name,
     ),
@@ -158,7 +159,7 @@ PANEL_SPECS: tuple[PanelSpec, ...] = (
                 "Primary dilution factor",
                 enabled=False,
             ),
-            FieldSpec("optional", "Optional condition", "Optional condition"),
+            FieldSpec("optional", "Optional condition", "Optional condition", required=False),
         ),
         build_name=build_ihc_name,
     ),
