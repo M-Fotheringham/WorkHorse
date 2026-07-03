@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QPainter, QPixmap
+from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QLabel,
@@ -21,6 +21,7 @@ from workhorse.slidename_generator.slidename_generator import slidename_generato
 
 
 BACKGROUND_IMAGE = Path("docs") / "_figs" / "workhorse_logo.webp"
+APP_ICON = Path("docs") / "_figs" / "workhorse_logo.ico"
 
 
 def find_project_file(relative_path: Path) -> Path | None:
@@ -42,8 +43,22 @@ class WorkHorseWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("WorkHorse")
+        self._set_application_icon()
         self.resize(900, 600)
         self.show_main_menu()
+
+    def _set_application_icon(self) -> None:
+        """Set the WorkHorse icon for the title bar and taskbar."""
+        icon_path = find_project_file(APP_ICON)
+        if icon_path is None:
+            return
+
+        icon = QIcon(str(icon_path))
+        self.setWindowIcon(icon)
+
+        app = QApplication.instance()
+        if app is not None:
+            app.setWindowIcon(icon)
 
     def _set_page(self, page: QWidget) -> None:
         self.setCentralWidget(page)
@@ -76,13 +91,11 @@ class Menu(QWidget):
                 background-color: rgba(255, 255, 255, 215);
                 border-radius: 18px;
             }
-
             QLabel#pageTitle {
                 color: #202020;
                 font-size: 24px;
                 font-weight: 600;
             }
-
             QPushButton {
                 font-size: 16px;
                 min-width: 220px;
@@ -139,7 +152,6 @@ class Menu(QWidget):
     def paintEvent(self, event) -> None:  # noqa: N802
         """Paint a scalable background image behind the menu controls."""
         painter = QPainter(self)
-
         if self._background_pixmap.isNull():
             painter.fillRect(self.rect(), QColor("#f5f5f5"))
             return
