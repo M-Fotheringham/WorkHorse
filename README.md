@@ -9,8 +9,8 @@ Eliminate the human element.
 <br>
 
 ## 1.1 Downloading Executable
-Download the latest release from "Releases" on the right of the main repository page. <br>
-Run the .exe to start the app.
+Download the latest installer from "Releases" on the right of the main repository page. <br>
+Run the .exe to start the installation.
 <br>
 See *1.2 Installing Manually* to run the code as a package.
 
